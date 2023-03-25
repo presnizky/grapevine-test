@@ -1,0 +1,14 @@
+<div class="main">
+    <h3>Subscription List</h3>
+    <div *ngIf="error">
+      <p>Error: {{ error }}</p>
+    </div>
+  
+    <form class="form" [formGroup]="subscriptionsForm" (ngSubmit)="updateSubscription()">
+      <input class="input" type="text" name="name" placeholder="Enter subscription" formControlName="name"/>
+      <br />
+      <input class="input" type="text" name="description"  placeholder="Enter Description"  formControlName="description"/>
+      <br />
+      <button class="submit-button" [disabled]="subscriptionsForm.invalid">SUBMIT</button>
+    </form>
+</div>
