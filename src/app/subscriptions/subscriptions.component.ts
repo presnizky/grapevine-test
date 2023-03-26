@@ -1,7 +1,36 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { GET_USERS, GET_SUBSCRIPTION, GET_SUBSCRIPTIONS, CHARGE_SUBSCRIPTION, UPDATE_SUBSCRIPTION } from '../graphql/graphql.queries';
+import { GET_USERS, GET_SUBSCRIPTIONS, UPDATE_SUBSCRIPTION } from '../graphql/graphql.queries';
+
+interface SubscriptionResponse {
+  subscriptions: Subscription[];
+}
+
+interface Subscription {
+  id: number;
+  user: User;
+  startDate: Date;
+  interval: string;
+  paymentMethod?: PaymentMethod;
+  amount: number;
+  nextPaymentDate?: Date;
+  totalDonated?: number;
+}
+
+interface PaymentMethod {
+  id: number;
+  name: String;
+  creditCardNumber: String;
+  expirationDate: Date;
+  ccv: number;
+}
+
+interface User {
+  id: number;
+  firstName: string;
+  lastname: string;
+}
 
 
 @Component({
@@ -10,8 +39,16 @@ import { GET_USERS, GET_SUBSCRIPTION, GET_SUBSCRIPTIONS, CHARGE_SUBSCRIPTION, UP
   styleUrls: ['./subscriptions.component.css']
 })
 export class SubscriptionsComponent implements OnInit {
+  @Input() subscriptions: any[] = [];
   users: any[] = [];
-  subscriptions: any[] = [];
+  editedSubscription: any;
+  editingSubscriptionId: number = -1;
+  editingField: string = '';
+  isEditing: boolean = false;
+  currentPage: number = 1;
+  pageSize: number = 2;
+  name = 'ddlUsers';
+  label = 'Select a user: ';
   error: any;
 
   subscriptionsForm = new FormGroup({
@@ -19,28 +56,78 @@ export class SubscriptionsComponent implements OnInit {
     description: new FormControl('', Validators.required)
   });
 
-  getSubscriptions() {
-
+  getPaymentMethod(subscription: Subscription): string {
+    if (!subscription || !subscription.paymentMethod) {
+      return '';
+    }
+    const paymentMethod = subscription.paymentMethod;
+    return `${paymentMethod.name} ending in ${paymentMethod.creditCardNumber.slice(-4)}`;
   }
 
-  updateSubscription() {
-        // apollo graphql query to update a subscription
-        this.apollo.mutate({
-          mutation: UPDATE_SUBSCRIPTION,
-          variables: {
-            donation: {}
-          },
-          refetchQueries: [{
-            query: GET_SUBSCRIPTIONS
-          }]
-        }).subscribe(({data}: any) => {
-          this.subscriptions = data.subscriptions;
-          this.subscriptionsForm.reset();
+  getTotalDonated(subscription: Subscription): string {
+    if (!subscription) {
+      return '';
+    }
+    const totalDonated = subscription.totalDonated || 0;
+    const startDate = new Date(subscription.startDate).toLocaleDateString("en-US");
+    return `${totalDonated.toLocaleString('en-US', {style: 'currency', 'currency': 'USD'})} since ${startDate}`;
+  }
+
+  startEditing(subscription: Subscription, field: string): void {
+    this.isEditing = true;
+    this.editingSubscriptionId = subscription.id;
+    this.editingField = field;
+    this.editedSubscription = Object.assign({}, subscription);
+  }
+
+  stopEditing(): void {
+    this.isEditing = false;
+    this.editingSubscriptionId = -1;
+    this.editingField = '';
+    this.editedSubscription = null;
+  }
+
+  onOptionSelected(event: any) {
+    this.error = '';
+    const userId = event.target.value;
+    this.apollo.watchQuery<SubscriptionResponse>({ query: GET_SUBSCRIPTIONS, variables: { userId } }).valueChanges.subscribe(result => {
+      this.subscriptions = [...result.data.subscriptions];
+    });
+  }
+
+  updateSubscription(subscription: Subscription) {
+     // apollo graphql query to update a subscription
+    const nextPaymentDate = subscription.nextPaymentDate !== undefined ? new Date(subscription.nextPaymentDate) : subscription.nextPaymentDate;
+
+    this.apollo.mutate({
+      mutation: UPDATE_SUBSCRIPTION,
+      variables: {
+        subscription: {
+          id: subscription.id,
+          userId: subscription.user.id,
+          amount: subscription.amount,
+          interval: subscription.interval,
+          nextPaymentDate
         }
-        , (error) => {
-          this.error = error;
-        }
-        );
+      }
+      }).subscribe(({data}: any) => {
+        const updatedSubscription = this.subscriptions.find(s => s.id===data.update_subscription.id); 
+        this.subscriptions[updatedSubscription] = data.update_subscription;
+        this.subscriptionsForm.reset();
+        this.stopEditing();
+      }
+      , (error) => {
+        this.error = error;
+      }
+    );
+  }
+
+  showMore(): void {
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = (this.currentPage + 1) * this.pageSize;
+    const newSubscriptions = this.subscriptions.slice(startIndex, endIndex);
+    this.subscriptions = this.subscriptions.concat(newSubscriptions);
+    this.currentPage += 1;
   }
 
   constructor(private apollo: Apollo) { }
