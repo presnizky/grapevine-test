@@ -45,8 +45,8 @@ export class SubscriptionsComponent implements OnInit {
   editingSubscriptionId: number = -1;
   editingField: string = '';
   isEditing: boolean = false;
-  currentPage: number = 1;
-  pageSize: number = 2;
+  subscriptionsPerPage = 2;
+  currentSubscriptionIndex = 0;
   name = 'ddlUsers';
   label = 'Select a user: ';
   error: any;
@@ -89,6 +89,8 @@ export class SubscriptionsComponent implements OnInit {
 
   onOptionSelected(event: any) {
     this.error = '';
+    this.subscriptionsPerPage = 2;
+    this.currentSubscriptionIndex = 0;
     const userId = event.target.value;
     this.apollo.watchQuery<SubscriptionResponse>({ query: GET_SUBSCRIPTIONS, variables: { userId } }).valueChanges.subscribe(result => {
       this.subscriptions = [...result.data.subscriptions];
@@ -123,11 +125,7 @@ export class SubscriptionsComponent implements OnInit {
   }
 
   showMore(): void {
-    const startIndex = this.currentPage * this.pageSize;
-    const endIndex = (this.currentPage + 1) * this.pageSize;
-    const newSubscriptions = this.subscriptions.slice(startIndex, endIndex);
-    this.subscriptions = this.subscriptions.concat(newSubscriptions);
-    this.currentPage += 1;
+    this.currentSubscriptionIndex += this.subscriptionsPerPage;
   }
 
   constructor(private apollo: Apollo) { }
