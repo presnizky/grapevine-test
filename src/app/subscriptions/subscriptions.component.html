@@ -12,13 +12,7 @@
           <option *ngFor="let user of users" [value]="user.id">{{ user.firstName }} {{ user.lastName }}</option>
         </select>
       </div>
-      <div *ngFor="let subscription of subscriptions" class="subscription">
-        <div class="subscription__item">
-          <div class="subscription__label">Subscription Id</div>
-          <div class="subscription__value">
-            {{subscription.id}}
-          </div>
-        </div>
+      <div *ngFor="let subscription of subscriptions.slice(0, currentSubscriptionIndex + subscriptionsPerPage)" class="subscription">
         <div class="subscription__item">
           <div class="subscription__label">Amount:</div>
           <div class="subscription__value">
@@ -72,7 +66,10 @@
         </div>
       </div>
       <div class="pagination" *ngIf="subscriptions.length>0">
+        <button (click)="showMore()" [disabled]="currentSubscriptionIndex + subscriptionsPerPage >= subscriptions.length">Show More</button>
+      </div>
+      <!-- <div class="pagination" *ngIf="subscriptions.length>0">
         <button (click)="showMore()">Show More</button>
-      </div>       
+      </div>        -->
     </div>
 </div>
