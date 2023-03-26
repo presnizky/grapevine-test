@@ -1,14 +1,78 @@
 <div class="main">
-    <h3>Subscription List</h3>
-    <div *ngIf="error">
-      <p>Error: {{ error }}</p>
+  <div class="container">
+      <h3>Subscriptions</h3>
+      <div *ngIf="error">
+        <p>Error: {{ error }}</p>
+      </div>
+    
+      <div>
+        <label for="{{ name }}">{{ label }}</label>
+        <select id="{{ name }}" (change)="onOptionSelected($event)">
+          <option value="" disabled selected></option>
+          <option *ngFor="let user of users" [value]="user.id">{{ user.firstName }} {{ user.lastName }}</option>
+        </select>
+      </div>
+      <div *ngFor="let subscription of subscriptions" class="subscription">
+        <div class="subscription__item">
+          <div class="subscription__label">Subscription Id</div>
+          <div class="subscription__value">
+            {{subscription.id}}
+          </div>
+        </div>
+        <div class="subscription__item">
+          <div class="subscription__label">Amount:</div>
+          <div class="subscription__value">
+            <ng-container *ngIf="isEditing && (editingField === 'amount' && editingSubscriptionId === subscription.id) else displayAmount">
+              <input type="number" [(ngModel)]="editedSubscription.amount" name="amount" class="edit-value">
+              <a href="#" (click)="updateSubscription(editedSubscription)" class="save-button">Save</a>
+            </ng-container>
+            <ng-template #displayAmount>
+              {{ subscription.amount | currency }}
+              <a href="#" (click)="startEditing(subscription, 'amount')">Edit</a>
+            </ng-template>
+          </div>
+        </div>
+        <div class="subscription__item">
+          <div class="subscription__label">Interval:</div>
+          <div class="subscription__value">
+            <ng-container *ngIf="isEditing && (editingField === 'interval' && editingSubscriptionId === subscription.id); else displayInterval">
+              <select [(ngModel)]="editedSubscription.interval" name="interval" class="edit-value">
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="annual">Annual</option>
+              </select>
+              <a href="#" (click)="updateSubscription(editedSubscription)" class="save-button">Save</a>
+            </ng-container>
+            <ng-template #displayInterval>
+              {{ subscription.interval }}
+              <a href="#" (click)="startEditing(subscription, 'interval')">Edit</a>
+            </ng-template>
+          </div>
+        </div>
+        <div class="subscription__item">
+          <div class="subscription__label">Next Payment Date:</div>
+          <div class="subscription__value">
+            <ng-container *ngIf="isEditing && (editingField === 'nextPaymentDate' && editingSubscriptionId === subscription.id); else editNextPaymentDate">
+              <input type="date" [(ngModel)]="editedSubscription.nextPaymentDate" name="nextPaymentDate" class="edit-value">
+              <a href="#" (click)="updateSubscription(editedSubscription)" class="save-button">Save</a>
+            </ng-container>
+            <ng-template #editNextPaymentDate>
+              {{ subscription.nextPaymentDate | date: 'mediumDate' }}
+              <a href="#" (click)="startEditing(subscription, 'nextPaymentDate')">Edit</a>
+            </ng-template>
+          </div>
+        </div>
+        <div class="subscription__item">
+          <div class="subscription__label">Payment Method:</div>
+          <div class="subscription__value">{{ getPaymentMethod(subscription) }}</div>
+        </div>
+        <div class="subscription__item">
+          <div class="subscription__label">Total Donated:</div>
+          <div class="subscription__value">{{ getTotalDonated(subscription) }}</div>
+        </div>
+      </div>
+      <div class="pagination" *ngIf="subscriptions.length>0">
+        <button (click)="showMore()">Show More</button>
+      </div>       
     </div>
-  
-    <form class="form" [formGroup]="subscriptionsForm" (ngSubmit)="updateSubscription()">
-      <input class="input" type="text" name="name" placeholder="Enter subscription" formControlName="name"/>
-      <br />
-      <input class="input" type="text" name="description"  placeholder="Enter Description"  formControlName="description"/>
-      <br />
-      <button class="submit-button" [disabled]="subscriptionsForm.invalid">SUBMIT</button>
-    </form>
 </div>

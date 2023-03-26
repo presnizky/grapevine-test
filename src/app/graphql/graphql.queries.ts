@@ -21,10 +21,11 @@ const GET_SUBSCRIPTION = gql`
             startDate
             interval
             paymentMethod {
-            name
-            creditCardNumber
-            expirationDate
-            ccv
+                id
+                name
+                creditCardNumber
+                expirationDate
+                ccv
             }
             amount
             nextPaymentDate
@@ -40,12 +41,16 @@ const GET_SUBSCRIPTIONS = gql`
             amount
             interval
             nextPaymentDate
+            user {
+                id
+            }
             paymentMethod {
-            id
-            name
-            creditCardNumber
+                id
+                name
+                creditCardNumber
             }
             totalDonated
+            startDate
         }
     }
 `
@@ -61,10 +66,11 @@ const CHARGE_SUBSCRIPTION = gql`
             startDate
             interval
             paymentMethod {
-            name
-            creditCardNumber
-            expirationDate
-            ccv
+                id
+                name
+                creditCardNumber
+                expirationDate
+                ccv
             }
             amount
             nextPaymentDate
@@ -78,16 +84,18 @@ const UPDATE_SUBSCRIPTION = gql`
         update_subscription(subscription: $subscription) {
             id
             user {
-            firstName
-            lastName
+                id
+                firstName
+                lastName
             }
             startDate
             interval
             paymentMethod {
-            name
-            creditCardNumber
-            expirationDate
-            ccv
+                id
+                name
+                creditCardNumber
+                expirationDate
+                ccv
             }
             amount
             nextPaymentDate
